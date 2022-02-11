@@ -1,6 +1,15 @@
 \documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
 \usepackage{amsmath, amsthm, amssymb}
 \usepackage[margin=0.75in]{geometry}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
 
 \theoremstyle{plain}
 \newtheorem{thm}{Theorem}
@@ -57,35 +66,98 @@ analysis-of-algorithms-spring-2015/\\
 \end{defn}
 
 \section{Interval Scheduling}
-\subsection{Problem statement}
+\subsection{Definitions \& Algorithm}
 
+\begin{defn}
+    A {\bf request} is an ordered pair of numbers $(s, f) \in \N \times \N$ representing ``start'' and ``finish'' times.
+\end{defn}
 
+\begin{defn}
+    Two requests $r_i = (s_i, f_i)$ and $r_j = (s_j, f_j)$ are {\bf compatible} if $f_i \leq s_j$ and
+    $f_j \leq s_i$ (they don't overlap). A set of requests is {\bf compatible} if every pair of requests is compatible.
+\end{defn}
 
+\begin{defn}
+    Given a set of requests $R$, the \textbf{optimal schedule of $R$} is the largest-cardinality compatible 
+    subset of $R$.
+\end{defn}
 
+\begin{algorithm}
+    \caption{Greedy Algorithm for Interval Scheduling}
+    \begin{algorithmic}
+        \Input
+        \Desc{$R$}{a list of requests, ordered by finish time}
+        \EndInput
+        \Output
+        \Desc{$C$}{the optimal schedule of $R$}
+        \EndOutput
+    \end{algorithmic}
+    \vspace{3pt}
+    \begin{algorithmic}[1]
+        \State $R' \gets R$
+        \State $O \gets \{\}$
+        \While{$R'$ is not empty}
+            \State $r \gets$ the request in $R'$ with the earliest finish time
+            \State Add $r$ to $O$
+            \State Remove all requests from $R'$ which are not compatible with $r$
+        \EndWhile
+        \State \Return $O$
+    \end{algorithmic}
+\end{algorithm}
 
+\subsection{Correctness}
 
+First, we'll prove the correctness of this algorithm.
 
+\begin{thm}
+    Given a list of requests $R$ (ordered by finish time), \textbf{Algorithm 1} produces an optimal schedule of $R$.
+\end{thm}
 
+\begin{proof}
+    (Induction on $k^* = $ the size of the optimal schedule)\\
+    \indent\textbf{Base case:}
+    Suppose $k^* = 1$. Then {\bf Algorithm 1} returned one request $r$, where $r$ has the earliest 
+    finish time, and the rest of the requests are incompatible with $r$. Therefore, there can only be
+    one compatible request, so {\bf Algorithm 1} succeeded.
+    \bigbreak
 
+    \textbf{Inductive hypothesis:}
+    If a list of requests $R$ has an optimal schedule of size $k^*$, then {\bf Algorithm 1} will produce
+    a schedule of size $k^*$.
+    \bigbreak
 
+    Let $S$ be a list of requests which has an optimal schedule $O^*$ of size $(k^* + 1)$:
+    $$O^*[1, \ldots, k^* + 1] = (s_{j_1}, f_{j_1}), \ldots, (s_{j_{k^* + 1}}, f_{j_{k^* + 1}})$$
 
+    Suppose, when \textbf{Algorithm 1} is run on $S$, it produces the schedule $O$ of size $k$:
+    $$O[1, \ldots, k] = (s_{i_1}, f_{i_1}), \ldots, (s_{i_k}, f_{i_k})$$
 
+    Note that $f_{i_1} \leq f_{j_1}$, because by definition, the algorithm chooses the request with the earliest 
+    finish time. Then, we can define a new schedule by taking $O^*$, and replacing $O^*[1]$ with $O[1]$:
+    $$O^{**}[1, \ldots, k^* + 1] = (s_{i_1}, f_{i_1}), (s_{j_2}, f_{j_2}), \ldots, (s_{j_{k^* + 1}}, f_{j_{k^* + 1}})$$
 
+    Note that $O^{**}$ is also optimal, as it has length $(k^* + 1)$. We define a new list $S'$:
+    $$S' = \{(s_i, f_i) \mid (s_i, f_i) \in S \text{ and } s_i \geq f_{i_1}\}$$
 
+    In other words, $S'$ is the list of intervals in $S$ which are compatible with $(s_{i_1}, f_{i_1})$.
 
+    Because $O^{**}$ is optimal for $S$, $O^{**}[2, \ldots, k^* + 1]$ is optimal for $S'$. By the 
+    \textbf{Inductive hypothesis}, \textbf{Algorithm 1} should produce a schedule of $k^*$ requests when 
+    run on $S'$. So, when run on $S$, \textbf{Algorithm 1} will:
+    \begin{enumerate}
+        \item choose $(s_{i_1}, f_{i_1})$ (we've stated this explicitly),
+        \item then choose another $k^*$ requests (as now, the algorithm is effectively running on $S'$).
+    \end{enumerate}
+    So \textbf{Algorithm 1} will return the optimal schedule of size $(k^* + 1)$.
+\end{proof}
 
+\subsection{Runtime}
 
-
-
-
-
-\end{document}
-
-
-
-
-
-
+\textbf{Algorithm 1} runs in $O(n^2)$ time, as:
+\begin{enumerate}
+    \item it iterates $O(n)$ times (no request can be processed more than once),
+    \item and for each selected request, every subsequent request is checked, resulting in another $O(n)$.
+\end{enumerate}
 
 
 
