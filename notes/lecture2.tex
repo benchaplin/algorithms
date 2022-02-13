@@ -94,14 +94,16 @@ We'll represent a convex hull as a sequence of points in clockwise order.
     \end{algorithmic}
     \vspace{3pt}
     \begin{algorithmic}[1]
-        \State $C \gets \{\}$
-        \For{each pair of points $p, q \in S$}
-            \State Draw the line which holds both points
-            \If{all remaining points lie on one side of the line}
-                \State Add the points $p, q$ to $C$
-            \EndIf
-        \EndFor
-        \State \Return the elements of $C$, clockwise-ordered
+        \Procedure{convexhull}{$S$}
+            \State $C \gets \{\}$
+            \For{each pair of points $p, q \in S$}
+                \State Draw the line which holds both points
+                \If{all remaining points lie on one side of the line}
+                    \State Add the points $p, q$ to $C$
+                \EndIf
+            \EndFor
+            \State \Return the elements of $C$, clockwise-ordered
+        \EndProcedure
     \end{algorithmic}
 \end{breakablealgorithm}
 
@@ -117,6 +119,11 @@ The sorting of the elements before returning runs in linear time and occurs only
 therefore, \textbf{Algorithm 1} runs in $O(n^3)$ time.
 
 \subsection{Divide \& conquer algorithm}
+
+\begin{defn}
+    Given a vertical line and two points on either side of it $p, q$, define $y(p, q)$ to be the $y$-intercept of the point
+    where the vertical line intersects the line containing $p$ and $q$.
+\end{defn}
 
 \begin{breakablealgorithm}
     \caption{Divide \& conquer algorithm for the Convex Hull problem}
@@ -136,9 +143,58 @@ therefore, \textbf{Algorithm 1} runs in $O(n^3)$ time.
     \end{algorithmic}
     \vspace{3pt}
     \begin{algorithmic}[1]
-        \State b
+        \Procedure{divide}{$S$}
+            \State $m \gets$ the median $x$ value for all the points in $S$
+            \If{$|S| > C$} \Comment{any constant $C$ will work}
+                \State $A \gets \{(x, y) \in S \mid x \leq m\}$
+                \State $B \gets \{(x, y) \in S \mid x > m\}$
+                \State $CH(A) \gets \textsc{divide}(A)$
+                \State $CH(B) \gets \textsc{divide}(B)$
+            \Else
+                \State $CH(A) \gets \textsc{convexhull}(A)$ \Comment{from \textbf{Algorithm 1}}
+                \State $CH(B) \gets \textsc{convexhull}(B)$
+                \State \Return $\textsc{merge}(CH(A), CH(B), m)$
+            \EndIf
+        \EndProcedure
+        \Procedure{merge}{$A, B, m$}
+            \State $i,j \gets 1$
+            \State $a_i \gets$ $i$-th point in $A$, ordered counterclockwise, from the point with the 
+            $x-$value closest to $m$ 
+            \State $b_j \gets$ $j$-th point in $B$, ordered clockwise, from the point with the 
+            $x-$value closest to $m$ 
+            \While{$y(a_{i + 1}, b_j) > y(a_i, b_j)$ or $y(a_{i}, b_{j + 1}) > y(a_i, b_j)$}
+                \If{$y(a_{i + 1}, b_j) > y(a_i, b_j)$}
+                    \State $i$++
+                \Else
+                    \State $j$++
+                \EndIf
+            \EndWhile
+            \State $u \gets (a_i, b_j)$ \Comment{the upper tangent}
+            \State (repeat the above procedure, but order $A$ clockwise and $B$ counterclockwise)
+            \State $l \gets (a_{i'}, b_{j'})$ \Comment{the lower tangent}
+            \State \Return $CH(A \cup B)$:\\
+            \hspace{10pt} (being the segments in $A$ until $a_i$, $u$, the 
+            segments in $B$ starting at $a_{i'}$ up until $b_{j'}$, and $l$)
+        \EndProcedure
     \end{algorithmic}
 \end{breakablealgorithm}
+
+\subsection{Divide \& conquer runtime}
+
+The divide and conquer algorithm:
+\begin{enumerate}
+    \item divides the problem in half $O(log(n))$ times
+        \begin{enumerate}
+            \item for each divide, we must find a median, which takes $O(n)$ time
+        \end{enumerate}
+    \item finds a convex hull in $O(1)$ time (as we've divided down to a constant factor)
+    \item merges two convex hulls $O(log(n))$ times 
+        \begin{enumerate}
+            \item each merge takes $O(n)$ time 
+        \end{enumerate}
+\end{enumerate}
+
+Therefore, \textbf{Algorithm 2} runs in $O(nlog(n))$ + $O(nlog(n))$ = $O(nlog(n))$ time.
 
 
 
