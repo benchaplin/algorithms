@@ -1,0 +1,164 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Problem 1-1}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Problem statement}
+
+\textit{Drunken Donuts}, a new wine-and-donuts restaurant chain, wants to build restaurants on many
+street corners with the goal of maximizing their total profit.
+
+The street network is described as an undirected graph $G = (V, E)$, where the potential restaurant
+sites are the vertices of the graph. Each vertex $u$ has a nonnegative integer value $p(u)$, which describes
+the potential \textbf{profit of site $u$}. Two restaurants cannot be built on adjacent vertices (to avoid 
+self-competition). You are supposed to design an algorithm that outputs the chosen set $U \subseteq V$ of sites
+that maximizes the total profit $\sum_{u \in U} p(u)$.
+
+First, for parts (a)–(c), suppose that the street network $G$ is acyclic, i.e., a tree.
+\bigbreak
+
+\textbf{(b)} Give an efficient algorithm to determine a placement with maximum profit.
+
+\textbf{(c)} Suppose that, in the absence of good market research, DD decides that all sites are 
+equally good, so the goal is simply to design a restaurant placement with the largest 
+number of locations. Give a simple greedy algorithm for this case, and prove its
+correctness.
+
+\section{Varying-profitable locations}
+\subsection{Profit-maximizing algorithm}
+ 
+\begin{breakablealgorithm}
+    \caption{DP algorithm for maximizing profit}
+    \begin{algorithmic}
+        \Input
+        \Desc{$G$}{an acyclic graph with weighted vertices describing profit}
+        \EndInput
+        \Output
+        \Desc{$p$}{the maximum profit over non-adjacent vertices}
+        \EndOutput
+    \end{algorithmic}
+    \vspace{3pt}
+    \begin{algorithmic}[1]
+        \Procedure{maxprofit}{$v$}
+            \If{$v$ has no children}
+                \State \Return $p(v)$
+            \Else
+                \State $a \gets p(v) + \sum_{v \in v.grandchildren} \textsc{maxprofit($v$)}$
+                \State $b \gets \sum_{v \in v.children} \textsc{maxprofit($v$)}$
+                \State \Return max$(a, b)$
+            \EndIf
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Correctness}
+
+\begin{defn}
+    Let $v$ be a vertex in a tree, and $H$ be the tree it roots. 
+    The \textbf{maxprofit of \textit{v}} is the maximum profit over all subsets $U \subseteq H$, 
+    where no two vertices in $U$ are adjacent.
+\end{defn}
+
+\begin{proof} (Induction on the height of $G$)\\
+    \textbf{Base case 1:} assume $G$ has height 1, and thus only one vertex $v$. 
+    Then \textbf{Algorithm 1} will return $p(v)$, which is the maxprofit of $G$.\\
+    \noindent\textbf{Base case 2:} assume $G$ has has height 2. Let $h$ be the root of $G$.
+    
+    \indent\textbf{Case 1:} $p(h) > \sum_{v \in h.children} p(v)$\\
+    \indent\indent\textbf{Algorithm 1} will return $p(v)$, as $a > b$.\\
+    \indent\textbf{Case 2:} $p(h) \leq \sum_{v \in h.children} p(v)$\\
+    \indent\indent\textbf{Algorithm 1} will return $\sum_{v \in h.children} p(v)$, as $b \geq a$.
+    \bigbreak
+
+    \noindent\textbf{Inductive hypothesis:} Assume \textbf{Algorithm 1} is correct when run on graphs
+    of height $n - 1$ and $n - 2$.
+    \bigbreak
+    
+    \noindent Suppose $|G| = n > 2$ and \textbf{Algorithm 1} is run on $G$. Let $h$ be the root of $G$.
+    \bigbreak
+    \indent\textbf{Case 1:} suppose $h$ is included in the profit-maximizing subset of
+    vertices. 
+
+    Then, \textbf{Algorithm 1} returns the sum of $p(h)$ with recursive calls on the grandchildren of $h$.
+    The trees under the grandchildren of $h$ have height $n - 2$, so by our hypothesis, we can be 
+    sure that the algorithm returns the maxprofit of each grandchild.  
+
+    Furthermore, no grandchild is adjacent to another, so no member of either's tree is adjacent to 
+    a member of another's tree.
+
+    Therefore, \textbf{Algorithm 1} returns the maxprofit of $h$.
+    \bigbreak
+
+    \indent\textbf{Case 2:} suppose otherwise.
+
+    Then, \textbf{Algorithm 1} returns the sum $\sum_{v \in h.children} p(v)$. The trees under each 
+    child $v$ have height $n - 1$, so by our hypothesis, we can be sure that the algorithm returns 
+    the maxprofit under each child. 
+
+    Furthermore, no child is adjacent to another, so no member of either's tree is adjacent to 
+    a member of another's tree.
+
+    Therefore, \textbf{Algorithm 1} returns the maxprofit of $h$.
+\end{proof}
+
+\subsection{Runtime analysis}
+
+\textbf{Algorithm 1} performs a lookup on each vertex in the $G$ exactly once, thus the runtime
+is $O(|V|)$.
+
+
+
+\end{document}
+
