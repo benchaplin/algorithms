@@ -1,0 +1,155 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Lecture 2}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Divide \& Conquer}
+\subsection{Paradigm}
+
+Given a problem of size $n$, the general strategy of divide \& conquer can be summarized:
+\begin{enumerate}
+    \item Divide the problem into $a$ ($a \geq 1)$ subproblems of size $\frac{n}{b}$ ($b > 1$).
+    \item Recursively solve subproblems.
+    \item Combine solutions of the subproblems into one overall solution.
+\end{enumerate}
+
+\section{The Convex Hull problem}
+\subsection{Definitions}
+
+\begin{defn}
+    Given a set of points $S$ on the real plane, \textbf{convex hull of S} ($CH(S)$) is the smallest 
+    convex polygon containing all of the points in $S$.
+\end{defn}
+
+We'll represent a convex hull as a sequence of points in clockwise order.
+
+\subsection{Brute-force algorithm}
+
+\begin{breakablealgorithm}
+    \caption{Brute-force algorithm for the Convex Hull problem}
+    \begin{algorithmic}
+        \Input
+        \Desc{$S$}{a set of points in the real plane, where:
+        \begin{enumerate}
+            \setlength{\itemindent}{.5in}
+            \item no two points have the same $x$-coordinate,
+            \item no two points have the same $y$-coordinate,
+            \item and no three points are colinear
+        \end{enumerate}}
+        \EndInput
+        \Output
+        \Desc{$CH(S)$}{\hspace{16pt} the convex hull of $S$ (as a sequence of points in clockwise order)}
+        \EndOutput
+    \end{algorithmic}
+    \vspace{3pt}
+    \begin{algorithmic}[1]
+        \State $C \gets \{\}$
+        \For{each pair of points $p, q \in S$}
+            \State Draw the line which holds both points
+            \If{all remaining points lie on one side of the line}
+                \State Add the points $p, q$ to $C$
+            \EndIf
+        \EndFor
+        \State \Return the elements of $C$, clockwise-ordered
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Brute-force runtime}
+
+The brute-force algorithm:
+\begin{enumerate}
+    \item iterates $O(n^2)$ times (line 2)
+    \item during each, iterates $O(n)$ times (line 4)
+\end{enumerate}
+
+The sorting of the elements before returning runs in linear time and occurs only once, 
+therefore, \textbf{Algorithm 1} runs in $O(n^3)$ time.
+
+\subsection{Divide \& conquer algorithm}
+
+\begin{breakablealgorithm}
+    \caption{Divide \& conquer algorithm for the Convex Hull problem}
+    \begin{algorithmic}
+        \Input
+        \Desc{$S$}{a set of points in the real plane, where:
+        \begin{enumerate}
+            \setlength{\itemindent}{.5in}
+            \item no two points have the same $x$-coordinate,
+            \item no two points have the same $y$-coordinate,
+            \item and no three points are colinear
+        \end{enumerate}}
+        \EndInput
+        \Output
+        \Desc{$CH(S)$}{\hspace{16pt} the convex hull of $S$ (as a sequence of points in clockwise order)}
+        \EndOutput
+    \end{algorithmic}
+    \vspace{3pt}
+    \begin{algorithmic}[1]
+        \State b
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
