@@ -1,0 +1,249 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Lecture 3}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Polynomials}
+
+\begin{defn}
+    A \textbf{polynomial of degree $n$} is a function of the form $A(x) = a_0 + a_1x + \ldots + 
+    a_{n - 1}x^{n-1}$, with the \textbf{coefficient vector} $\langle a_0, a_1, \ldots, a_{n - 1}
+    \rangle$.
+\end{defn}
+
+\subsection{Operations}
+
+\begin{itemize}
+    \item \textbf{Evaluation:} $f: A(x), x_0 \mapsto A(x_0)$\\
+        A naive algorithm would take $O(n^2)$ time, but if one saves the values of $x_0^k$
+        (\textbf{Horner's rule}), evaluation takes $O(n)$.
+
+    \item \textbf{Addition:} $f: A(x), B(x) \mapsto A(x) + B(x)$\\
+        Takes $O(n)$ time.
+
+    \item \textbf{Multiplication:} $f: A(x), B(x) \mapsto A(x) B(x)$\\
+        If we use coefficient form, it seems the best that can be done is $O(n^2)$.
+\end{itemize}
+
+Our problem for today: can we do polynomial multiplication faster than $O(n^2)$. 
+
+\subsection{Representations}
+
+There are more ways to represent a polynomial $A(x) = a_0 + a_1x + \ldots a_{n-1}x^{n-1}$.
+
+\begin{itemize}
+    \item \textbf{Coefficient vector:} $\langle a_0, a_1, ldots, a_{n-1} \rangle$ (what we're used to).
+    \item \textbf{Roots:} $r_0, r_1, \ldots, r_{n - 1}$ where $A(x) = c(x - r_0)(x - r_1)\cdots
+        (x - r_{n-1})$ for some constant $c$ (by the Fundamental Theorem of Algebra, $n$ roots 
+        uniquely determine a polynomial).
+    \item \textbf{Samples:} $(x_k, y_k)$ for $k = 0, 1, \ldots, n - 1$, where $A(x_k) = y_k$, and
+        the $x_k$'s are unique ($n$ unique samples also uniquely determine a polynomial, by the FTA).
+\end{itemize}
+
+Differing the representation of polynomials results in different complexities of the operations 
+discussed above:
+
+\begin{center}
+    \begin{tabular}{ c c c c }
+        & \textbf{Coefficient vector} & \textbf{Roots} & \textbf{Samples} \\ 
+        \textbf{Evaluation} & $O(n)$ & $O(n)$ & $O(n^2)$\\
+        \textbf{Addition} & $O(n)$ & $\infty$ & $O(n)$\\
+        \textbf{Multiplication} & $O(n^2)$ & $O(n)$ & $O(n)$\\
+    \end{tabular}
+\end{center}
+
+\section{Fast Fourier Transform}
+
+So how can we do polynomial multiplication in $\leq O(n^2)$ time?
+
+The idea is to convert polynomials from coefficient form to sample form. Then, multiplying them takes 
+$O(n)$ time, as seen above. Then, we will convert the product back to coefficient form. Thus, what
+we need is:
+\begin{itemize}
+    \item A way to convert polynomials: \textbf{coefficients} $\rightarrow$ \textbf{samples} in 
+        $\leq O(nlogn)$ time.
+    \item A way to convert polynomials: \textbf{samples} $\rightarrow$ \textbf{coefficients} in 
+        $\leq O(nlogn)$ time.
+\end{itemize}
+
+\textbf{Fast Fourier Transform} is the name of the algorithm we will use to do these conversions.
+
+\subsection{Naive approach}
+
+\textbf{Coefficients} $\rightarrow$ \textbf{Samples}:
+
+Let $\langle a_0, a_1, \ldots, a_{n-1} \rangle$ be the coefficient vectors of a polynomial $A$.
+Select some $X = \langle x_0, x_1, \ldots, x_{n-1} \rangle$ to define the sample. Then, we want to calculate
+$Y = \langle y_0, y_1, \ldots, y_{n-1} \rangle$, where $A(x_k) = y_k$. This can be represented as 
+evaluating the following equation:
+
+$$
+V = \begin{pmatrix}
+    1 & x_0 & x_0^2 & \dots & x_0^{n-1}\\
+    1 & x_1 & x_1^2 & \dots & x_1^{n-1}\\
+    \vdots\\
+    1 & x_{n-1} & x_{n-1}^2 & \ldots & x_{n-1}^{n-1}
+\end{pmatrix},
+A = \begin{pmatrix}
+    a_0\\
+    a_1\\
+    \vdots\\
+    a_{n-1}
+\end{pmatrix},
+Y = \begin{pmatrix}
+    y_0\\
+    y_1\\
+    \vdots\\
+    y_{n-1}
+\end{pmatrix}
+$$
+
+$$ V \cdot A = Y $$
+
+However, this takes $O(n^2)$ time.
+\bigbreak
+\noindent\textbf{Samples} $\rightarrow$ \textbf{Coefficients}:
+
+Now suppose we are given $X$ and $Y$, and asked to determine $A$:
+
+$$V^{-1} \cdot Y = A$$
+
+This also takes $O(n^2)$ time.
+
+\subsection{Collapsing sets}
+
+We will use divide \& conquer to evaluate the polynomial. However, if we continue using any values
+for $X$, we will face the following problem -- our recursion will look like:
+
+$$T(n, |X|) = 2T(\frac{n}{2}, |X|) + O(n + |X|)$$
+
+Note, while $n$ shrinks by half as we recurse, $|X|$ stays the same. This needs to change if we are
+to beat $O(n^2)$.
+
+\begin{defn}
+    A set $X$ is \textbf{collapsing} if $|X^2| = \displaystyle\frac{|X|}{2}$ and $X^2$ is collapsing, 
+    or $|X| = 1$.
+\end{defn}
+
+\begin{ex}
+    Let us build some collapsing sets:
+    \begin{itemize}
+        \item Let $X = \{ 1 \}$, then $X$ collapses by the base case.
+        \item Let $X = \{ -1, 1 \}$, then $X^2 = \{ 1 \}$, which collapses.
+        \item Let $X = \{ -i, i, -1, 1 \}$, then $X^2 = \{ -1, 1 \}$, which collapses.
+        \item $\cdots$
+    \end{itemize}
+
+    We see by this example that the $(2^n)^{th}$ roots of unity collapse for any $n \in \N$.
+\end{ex}
+
+\begin{defn}
+    The \textbf{Discrete Fourier Transform} is the matrix-vector product $V \cdot A$ for 
+    $x_k = e^{ik\tau / n}$ (where $\tau = 2\pi$).
+\end{defn}
+
+So what we want to compute is the \textbf{Discrete Fourier Transform}, as $e^{ik\tau/n}$ are the 
+$n^{th}$ roots of unity. This will give us our sample, and we can comupte it in $O(nlogn)$ time.
+
+\subsection{Algorithm}
+
+\begin{breakablealgorithm}
+    \caption{Divide \& conquer algorithm for FFT}
+    \begin{algorithmic}
+        \Input
+        \Desc{$A$}{polynomial represented as coefficient vectors}
+        \EndInput
+        \Output
+        \Desc{$(X, Y)$}\hspace{20pt}{a valid sample of $A$}
+        \EndOutput
+    \end{algorithmic}
+    \vspace{3pt}
+    \begin{algorithmic}[1]
+        \State Pad $A$ so that $|A| = 2^l$ for the smallest $l \in \N$ such that $2^l \geq |A|$.
+        \State $X \gets \{ e^{ik\tau/n} \mid k = 0, 1, \ldots, n - 1\}$
+        \State $Y \gets \textsc{dc}(A, X)$
+        \State \Return $(X, Y)$
+        \Procedure{dc}{$A, X$}
+        \EndProcedure
+        \Procedure{merge}{$A_e, A_o, x$}
+            \State \Return $A_e(x^2) + x(A_o(x^2))$
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
