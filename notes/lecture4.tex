@@ -185,13 +185,35 @@ To make writing algorithms quicker:
 \end{breakablealgorithm}
 
 \textbf{Runtime analysis:} \textsc{insert} runs in $O(\log\log u)$ time where $|V| = u$.
-\begin{itemize}
-    \item Each line 14 recursive call reduces the size of $V$ by $\sqrt{u}$, so we will have at most
-        $O(\log \log u)$ recursive calls.
 
-    \item If we hit a line 12 recursive call, we will finish in $O(\log \log u)$ time, as we only need to insert into
-        the summaries, of which there are $O(\log \log u)$.
-\end{itemize}
+\begin{breakablealgorithm}
+    \begin{algorithmic}[1]
+        \Procedure{delete}{$V, x$}
+        \If{$x = V$.min}
+            \State $i = V.$summary.min
+            \If{$i =$ null}
+                $V.$min $= V.$max $=$ null, \Return
+            \EndIf
+            \State $x = V.$min $=$ index$(i, V.$cluster[$i$].min)
+        \EndIf
+        \State $\textsc{delete}(V.$cluster[high($x$)], low($x$))
+        \If{$V.$cluster[high($x$)].min $=$ null}
+            \State $\textsc{delete}(V.$summary, high($x$))
+        \EndIf
+        \If{$x = V.$max}
+            \If{$V.$summary.max $=$ null}
+                \State $V.$max $= V.$min
+            \Else
+                \State $i = V.$summary.max
+                \State $V.$max = index($i, V.$cluster[$i$].max)
+            \EndIf
+        \EndIf
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\textbf{Runtime analysis:} \textsc{delete} runs in $O(\log\log u)$ time where $|V| = u$.
+
 
 
 
