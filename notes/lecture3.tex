@@ -113,9 +113,9 @@ $O(n)$ time, as seen above. Then, we will convert the product back to coefficien
 we need is:
 \begin{itemize}
     \item A way to convert polynomials: \textbf{coefficients} $\rightarrow$ \textbf{samples} in 
-        $\leq O(nlogn)$ time.
+        $\leq O(n\log n)$ time.
     \item A way to convert polynomials: \textbf{samples} $\rightarrow$ \textbf{coefficients} in 
-        $\leq O(nlogn)$ time.
+        $\leq O(n\log n)$ time.
 \end{itemize}
 
 \textbf{Fast Fourier Transform} is the name of the algorithm we will use to do these conversions.
@@ -195,7 +195,7 @@ to beat $O(n^2)$.
 \end{defn}
 
 So what we want to compute is the \textbf{Discrete Fourier Transform}, as $e^{ik\tau/n}$ are the 
-$n^{th}$ roots of unity. This will give us our sample, and we can comupte it in $O(nlogn)$ time.
+$n^{th}$ roots of unity. This will give us our sample, and we can comupte it in $O(n\log n)$ time.
 
 \subsection{Algorithm}
 
@@ -214,17 +214,45 @@ $n^{th}$ roots of unity. This will give us our sample, and we can comupte it in 
         \State Pad $A$ so that $|A| = 2^m$ for the smallest $m \in \N$ such that $2^m \geq |A|$.
         \State $n \gets 2^m$
         \State $X \gets \{ e^{ik\tau/n} \mid k = 0, 1, \ldots, n - 1\}$
-        \State $Y \gets \textsc{dc}(A, X)$
+        \State $Y \gets \textsc{dc}(A, X)$.values
         \State \Return $(X, Y)$
         \Procedure{dc}{$A, X$}
+            \State $A_e = \sum_{k=0}^{n/2} a_{2k}x^k$
+            \State $A_o = \sum_{k=0}^{n/2} a_{2k+1}x^k$
+            \If{$|A| = 2$}
+                \For{$x \in X$} \Comment{$X = \{-1, 1\}$ here}
+                    \State $M[x] = \textsc{merge}(A_e, A_o, x, \text{null})$
+                \EndFor
+                \State \Return $M$
+            \EndIf
+            \State $M_e = \textsc{dc}(A_e, X^2)$
+            \State $M_o = \textsc{dc}(A_o, X^2)$
+            \State \Return $\textsc{merge}(A_e, M_e, A_o, M_o, x)$
         \EndProcedure
-        \Procedure{merge}{$A_e, A_o, x$}
-            \State \Return $A_e(x^2) + x(A_o(x^2))$
+        \Procedure{merge}{$A_e, M_e, A_o, M_o, x$}
+            \State \Return $A_e(x^2) + x(A_o(x^2))$ \Comment{using $M_e$ and $M_o$ to calculate}
         \EndProcedure
     \end{algorithmic}
 \end{breakablealgorithm}
 
+\subsection{Runtime}
 
+\textbf{Algorithm 1} runs in $O(n\log n)$ time, as each recursive call takes $O(\log n)$ time, and 
+we make $O(n)$ recursive calls.
+
+\subsection{Complete Algorithm}
+
+Note that \textbf{Algorithm 1} simply transforms a polynomial from coefficient form to sample form.
+The entire FFT algorithm for polynomial multiplication is as follows:
+
+\begin{enumerate}
+    \item Run \textbf{Algorithm 1} on both polynomials -- $O(n\log n)$
+    \item Multiply the polynomials in sample form -- $O(n)$
+    \item Using the inverse DFT, run the same \textbf{Algorithm 1} to convert back to coefficient 
+        form -- $O(n\log n)$
+\end{enumerate}
+
+Therefore, the complete FFT algorithm also runs in $O(n\log n)$ time.
 
 
 
