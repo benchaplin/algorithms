@@ -119,15 +119,18 @@ Both clusters and summary vectors store their minimum and maximum values.
 To make writing algorithms quicker:
 
 \begin{defn}
-    Given $x \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{high}$(x) = \lfloor \frac{x}{\sqrt{u}}\rfloor$.
+    Given $x \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{high}$(x) = \lfloor \frac{x}{\sqrt{u}}\rfloor$
+    (this effectively gives us the index of the parent of $x$ in the summary vector).
 \end{defn}
 
 \begin{defn}
-    Given $x \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{low}$(x) = x \mod \sqrt{u}$.
+    Given $x \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{low}$(x) = x \mod \sqrt{u}$
+    (this effectively gives us the index of $x$ in its cluster).
 \end{defn}
 
 \begin{defn}
-    Given $i, j \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{index}$(i, j) = i\sqrt{u} + j$.
+    Given $i, j \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{index}$(i, j) = i\sqrt{u} + j$
+    (index(high($x$), low($x$)) = $x$).
 \end{defn}
 
 \subsection{Algorithms}
@@ -135,6 +138,12 @@ To make writing algorithms quicker:
 \begin{breakablealgorithm}
     \begin{algorithmic}[1]
         \Procedure{successor}{$V, x$}
+            \If{$|V| \leq 4$}
+                \State \Return index of successor \Comment{base case}
+            \EndIf
+            \If{$x < V.$min}
+                \State \Return $V.$min
+            \EndIf
             \State $i = \text{high}(x)$
             \If{low$(x) < V.$cluster$[i]$.max} \Comment{successor is in cluster $i$}
                 \State $j = \textsc{successor}(V.$cluster$[i],$ low$(x))$
@@ -147,8 +156,42 @@ To make writing algorithms quicker:
     \end{algorithmic}
 \end{breakablealgorithm}
 
-\textbf{Runtime analysis:} \textsc{successor} runs in $O(\log\log u)$ time. Because each 
+\textbf{Runtime analysis:} \textsc{successor} runs in $O(\log\log u)$ time where $|V| = u$.
+\begin{itemize}
+    \item Each line 7 recursive call reduces the size of $V$ by $\sqrt{u}$, so we will have at most
+        $O(\log \log u)$ recursive calls.
+    \item If we hit a line 9 recursive call, we will finish in $O(1)$ time, as we need only find the 
+        max of $V.$summary, then the max of the cluster it summarizes.
+\end{itemize}
 
+\begin{breakablealgorithm}
+    \begin{algorithmic}[1]
+        \Procedure{insert}{$V, x$}
+            \If{$V.$min $= null$}
+                \State $V.$min $= V.$max $= x$, \Return 
+            \EndIf
+            \If{$x < V.$min}
+                \State swap($x, V.$min)
+            \EndIf
+            \If{$x > V.$max}
+                \State $V.$max $= x$
+            \EndIf
+            \If{$V.$cluster[high($x$)].min $= $ null}
+                \State $\textsc{insert}(V.$summary, high($x$))
+            \EndIf
+            \State $\textsc{insert}(V.$cluster[high($x$)], low($x$))
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\textbf{Runtime analysis:} \textsc{insert} runs in $O(\log\log u)$ time where $|V| = u$.
+\begin{itemize}
+    \item Each line 14 recursive call reduces the size of $V$ by $\sqrt{u}$, so we will have at most
+        $O(\log \log u)$ recursive calls.
+
+    \item If we hit a line 12 recursive call, we will finish in $O(\log \log u)$ time, as we only need to insert into
+        the summaries, of which there are $O(\log \log u)$.
+\end{itemize}
 
 
 
