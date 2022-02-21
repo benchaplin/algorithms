@@ -55,16 +55,16 @@
 \maketitle
 \tableofcontents
 
-\section{Van Emde Boas Trees}
+\section{Background}
 \subsection{Operations}
 
 We want to maintain $n$ elements from the set $\{0, 1, \ldots, u - 1\}$, and support the following
 operations:
 
 \begin{itemize}
-    \item insert($V, x$): insert $x$ into $V$
-    \item delete($V, x$): delete $x$ from $V$
-    \item successor($V, x$): return the smallest element in $V$ which is larger than $x$
+    \item \textsc{insert}($V, x$): insert $x$ into $V$
+    \item \textsc{delete}($V, x$): delete $x$ from $V$
+    \item \textsc{successor}($V, x$): return the smallest element in $V$ which is larger than $x$
 \end{itemize}
 
 \subsection{Problem}
@@ -94,13 +94,60 @@ Which can be written:
           &= O(\log\log u)
 \end{align}
 
+\section{Van Emde Boas Trees}
+\subsection{Data structure}
 
+At their core, \textbf{van Emde Boas Trees} are bit vectors of size $u$ where:
+\[
+V[i] = 
+    \begin{cases}
+        0 & \text{if } i \text{ is not present}\\
+        1 & \text{if } i \text{ is present}
+    \end{cases}
+\]
 
+The vector is split into \textbf{clusters} of size $\sqrt u$.
 
+Above each cluster is a tree structure. Consider the elements of the cluster as the
+leaves of the tree, and store $(l_0 \vee l_1)$ in the parent node for each two neighboring leaves 
+$l_0, l_1$. The \textbf{summary} vector contains the root from each tree above each cluster.
 
+Both clusters and summary vectors store their minimum and maximum values.
 
+\subsection{Definitions}
 
+To make writing algorithms quicker:
 
+\begin{defn}
+    Given $x \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{high}$(x) = \lfloor \frac{x}{\sqrt{u}}\rfloor$.
+\end{defn}
+
+\begin{defn}
+    Given $x \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{low}$(x) = x \mod \sqrt{u}$.
+\end{defn}
+
+\begin{defn}
+    Given $i, j \in \{1, \ldots, u - 1\} \subseteq \N$, \textbf{index}$(i, j) = i\sqrt{u} + j$.
+\end{defn}
+
+\subsection{Algorithms}
+
+\begin{breakablealgorithm}
+    \begin{algorithmic}[1]
+        \Procedure{successor}{$V, x$}
+            \State $i = \text{high}(x)$
+            \If{low$(x) < V.$cluster$[i]$.max} \Comment{successor is in cluster $i$}
+                \State $j = \textsc{successor}(V.$cluster$[i],$ low$(x))$
+            \Else \Comment{successor is not in cluster $i$, check next in summary}
+                \State $i = \textsc{successor}(V.$summary$,$ high$(x))$     
+                \State $j = V.$cluster$[i].$min
+            \EndIf
+            \State \Return index$(i, j)$
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\textbf{Runtime analysis:} \textsc{successor} runs in $O(\log\log u)$ time. Because each 
 
 
 
