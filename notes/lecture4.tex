@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Lecture 4}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Van Emde Boas Trees}
+\subsection{Operations}
+
+We want to maintain $n$ elements from the set $\{0, 1, \ldots, u - 1\}$, and support the following
+operations:
+
+\begin{itemize}
+    \item insert($V, x$): insert $x$ into $V$
+    \item delete($V, x$): delete $x$ from $V$
+    \item successor($V, x$): return the smallest element in $V$ which is larger than $x$
+\end{itemize}
+
+\subsection{Problem}
+
+Balanced binary search trees support all three of the above operations in $O(\log n)$ time. The 
+goal of \textbf{van Emde Boas trees} is to support operations in $O(\log\log n)$ time.
+\bigbreak
+Let $n$ and $u$ be defined as they were above. If $u = n^{O(1)}$, then $\log\log u = O(\log\log n)$.
+
+\subsection{Recurrences}
+
+Recall the binary search recurrence:
+\begin{align}
+    T(k) &= T\left(\frac{k}{2}\right) + O(1)\\
+         &= O(\log k)
+\end{align}
+
+So we're seeking:
+\begin{align}
+    T(\log u) &= T\left(\frac{\log u}{2}\right) + O(1)\\
+              &= O(\log\log u)
+\end{align}
+
+Which can be written:
+\begin{align}
+    T'(u) &= T'(\sqrt u) + O(1)\\
+          &= O(\log\log u)
+\end{align}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+

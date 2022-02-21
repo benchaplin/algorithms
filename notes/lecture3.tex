@@ -211,7 +211,8 @@ $n^{th}$ roots of unity. This will give us our sample, and we can comupte it in 
     \end{algorithmic}
     \vspace{3pt}
     \begin{algorithmic}[1]
-        \State Pad $A$ so that $|A| = 2^l$ for the smallest $l \in \N$ such that $2^l \geq |A|$.
+        \State Pad $A$ so that $|A| = 2^m$ for the smallest $m \in \N$ such that $2^m \geq |A|$.
+        \State $n \gets 2^m$
         \State $X \gets \{ e^{ik\tau/n} \mid k = 0, 1, \ldots, n - 1\}$
         \State $Y \gets \textsc{dc}(A, X)$
         \State \Return $(X, Y)$
