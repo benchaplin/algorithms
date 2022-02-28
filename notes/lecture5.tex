@@ -1,0 +1,160 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Lecture 5}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Amortization}
+
+How can we measure the ``cost'' of an algorithm when an operation is slow in only some cases?
+
+For example, recall \textbf{table-doubling}, the process of scaling up a hash table when its 
+capacity is full. Most insertions are $O(1)$, but when the table needs to be doubled, the rehashing
+takes linear time. However, this table-doubling does not happen often, and crucially---does not 
+happen until a certain number of insertions have already been made. 
+
+There are many methods of defining this \textbf{amortized cost}. Let's look at a few.
+
+\subsection{Aggregate method}
+
+\begin{defn}
+    The \textbf{amortized cost} of an operation is equal to:
+    $$\frac{\text{the total cost of $k$ operations}}{k}$$
+\end{defn}
+
+\begin{ex}
+    Take table-doubling, starting with an empty structure on which we must perform $n$ insertions.
+    \begin{defn}
+        The \textbf{load factor} is defined as $\frac{m}{n}$, where $n$ is the number of elements
+        in the table and $m$ is the size of the table.
+    \end{defn}
+    We double the table when the load factor grows to $m$. Then, the runtime of $n$ insertions is:
+    $$\Theta(1 + 2^0 + 1 + 1 + 2^1 + \ldots + 2^{\log n}) = \Theta(n)$$
+    Where the 1's are plain insertions, and the factors of 2 are the respective doublings.
+    Therefore the \textbf{amortized cost} of $n$ insertions is:
+    $$\frac{\Theta(n)}{n} = \Theta(1)$$
+\end{ex}
+
+\subsection{Accounting method}
+
+For each operation, store ``credit'' in a ``bank account''---the main rule is that this bank account
+must maintain a positive balance. Then, we can allow future operations to pay their cost using 
+credit from the bank.
+
+\begin{defn}
+    The \textbf{amortized cost} of an operation is equal to:
+    $$\text{the real cost of the operation} - \text{the credit used}$$
+\end{defn}
+
+\begin{ex}
+    Back to table-doubling---consider insertions: when inserting, add a ``coin'' worth $\Theta(1)$.
+    Then, whenever we need to double the table:
+    \begin{itemize}
+        \item we need $n$ coins,
+        \item and we have $\frac{n}{2}$ coins.
+    \end{itemize}
+    Thus, the \textbf{amortized cost} of an insert is:
+    $$\Theta(n) - \Theta(1) \cdot \frac{n}{2} = \Theta(1)$$
+\end{ex}
+
+\subsection{Potential method}
+
+\begin{defn}
+    A \textbf{potential function} is a function $\Phi: \{\text{states}\} \rightarrow \Z^+$ giving a
+    positive integer value to each state (or configuration) of a data structure.
+\end{defn}
+
+\begin{defn}
+    The \textbf{amortized cost} of an operaiton is equal to:
+    $$\text{the actual cost of the operation} + \Phi(\text{after state}) - \Phi(\text{before state})$$
+\end{defn}
+
+As a result of the above definition:
+$$\sum \text{amortized costs} = \sum \text{actual costs} + \Phi(\text{end state}) - \Phi(\text{beginning state})$$
+
+\begin{ex}
+    Take a binary counter with an ``increment'' operation 
+    (e.g. $0011010111 \rightarrow 0011011000$). We define the potential function:
+    $$\Phi(x) = \text{the number of 1's in } x$$
+    
+    Let $t$ be the number of trailing 1's in $x$. Then, an increment operation destroys $t$ 1's and 
+    creates one 1. Thus, the \textbf{amortized cost} of an increment:
+    \begin{align*}
+        &= \text{the actual cost of the operation} + \Phi(\text{after state}) - \Phi(\text{before state})\\
+        &= (1 + t) + (-t + 1)\\
+        &= \Theta(1)
+    \end{align*}
+\end{ex}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
