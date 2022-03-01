@@ -1,0 +1,175 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Exercise 18.2-5}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+Exercise 18.2-5 from \textit{Introduction to Algorithms} by Cormen, Leiserson, Rivest \& Stein (3rd ed)
+\tableofcontents
+
+\section{Problem statement}
+
+In B-trees, since leaf nodes require no pointers to children, they could conceivably use a different
+(larger) $t$ value than internal nodes for the same disk page size. Show how to modify the procedures
+for creating and inserting into a B-tree to handle this variation
+\bigbreak
+
+\section{Improved B-tree}
+
+\subsection{Data structure}
+ 
+Given $t$, we can assume our disk page size had room for $2t$ pointers to children. Let $p$ be the
+size of a pointer, $k$ be the size of a key, and $c$ be a constant such that $cp = k$. Then we can
+support $pt = \frac{k}{c}t$ new keys.
+
+\subsection{B-tree creation}
+
+\begin{breakablealgorithm}
+    \caption{Original B-tree create}
+    \begin{algorithmic}
+        \Input
+        \Desc{$T$}{pointer to the tree}
+        \EndInput
+    \end{algorithmic}
+    \begin{algorithmic}[1]
+        \State $x = \textsc{allocate-node}()$
+        \State $x.leaf = \textbf{True}$
+        \State $x.n = 0$
+        \State $\textsc{disk-write}(x)$
+        \State $T.root = x$
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+Nothing needs to be changed to support the improved B-tree.
+
+\subsection{B-tree insertion}
+
+(No changes required to $\textsc{b-tree-split-child}$)
+
+\begin{breakablealgorithm}
+    \caption{\textsc{b-tree-insert}}
+    \begin{algorithmic}
+        \Input
+        \Desc{$T$}{pointer to the tree}
+        \Desc{$k$}{key to insert}
+        \EndInput
+    \end{algorithmic}
+    \begin{algorithmic}[1]
+        \State $r = T.root$
+        \If{$r.n == 2t - 1$ or ($r.leaf$ and $r.n == (2t - 1) + pt$)}
+            \State $s = \textsc{allocate-node}()$
+            \State $T.root = s$
+            \State $s.leaf = \textbf{False}$
+            \State $s.n = 0$
+            \State $s.c_1 = r$
+            \State $\textsc{b-tree-split-child}(s, 1)$
+            \State $\textsc{b-tree-insert-nonfull}(s, k)$
+        \Else
+            \State $\textsc{b-tree-insert-nonfull}(r, k)$
+        \EndIf
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+    \caption{\textsc{b-tree-insert-nonfull}}
+    \begin{algorithmic}
+        \Input
+        \Desc{$x$}{node under which to insert}
+        \Desc{$k$}{key to insert}
+        \EndInput
+    \end{algorithmic}
+    \begin{algorithmic}[1]
+        \State $i = x.n$
+        \If{$x.leaf$}
+            \While{$i \geq 1$ and $k < x.key_i$}
+                \State $x.key_{i + 1} = x.key_i$
+                \State $i = i - 1$
+            \EndWhile
+            \State $x.key_{i + 1} = k$
+            \State $x.n = x.n + 1$
+            \State $\textsc{disk-write}(x)$
+        \Else
+            \While{$i \geq 1$ and $k < x.key_i$}
+                \State $i = i - 1$
+            \EndWhile
+            \State $i = i + 1$
+            \State $\textsc{disk-read}(x.c_i)$
+            \If{$x.c_i.n == 2t - 1$ or ($x.c_i.leaf$ and $x.c_i.n == (2t - 1) + pt$}
+                \State $\textsc{b-tree-split-child}(x, i)$
+                \If{$k > x.key_i$}
+                    \State $i = i + 1$
+                \EndIf
+            \EndIf
+            \State $\textsc{b-tree-insert-nonfull}(x.c_i, k)$
+        \EndIf
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
