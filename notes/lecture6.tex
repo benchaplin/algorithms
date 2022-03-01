@@ -1,0 +1,208 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{claim}{Claim}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Lecture 6}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Randomization}
+
+A \textbf{randomized} or \textbf{probabilistic} algorithm makes some decisions based on a random 
+number generated at runtime. On the same input, a randomized algorithm may:
+\begin{itemize}
+    \item return different outputs
+    \item run differently, but return the same output
+\end{itemize}
+
+\begin{defn}
+    \textbf{Monte Carlo algorithms} are probably fast, but may not be correct.
+\end{defn}
+
+\begin{defn}
+    \textbf{Las Vegas algorithms} are certainly fast, but only probably correct.
+\end{defn}
+
+\begin{defn}
+    \textbf{Atlantic City algorithms} are both probably fast and probably correct.
+\end{defn}
+
+\subsection{Matrix Products}
+
+\begin{ex}
+    Consider the problem of verifying an $n \times n$ matrix product.
+    The standard method of multiplying matricies gives a runtime of $O(n^3)$. Better algorithms 
+    have been developed, however they only offer runtimes of around $O(n^{\log 7})$. We seek to 
+    use an $O(n^2)$ randomized algorithm where:
+    \begin{itemize}
+        \item if $A \times B = C$, then $P(\text{returns \textbf{True}}) = 1$
+        \item else, if $A \times B \neq C$, then $P(\text{returns \textbf{True}}) \leq \frac{1}{2}$
+    \end{itemize}
+
+    Then, running the algorithm on matrices $(A, B, C)$ $k$ times, and getting a result of \textbf{True}
+    every time gives a probability of incorrectness:
+    $$P(\text{incorrect}) \leq \frac{1}{2^k}$$
+
+    In other words, we can ensure a given level of certainty by running the algorithm a constant number 
+    of times. Thus, the overall runtime is still $O(n^2)$. 
+\end{ex}
+
+\subsection{Frievold's algorithm}
+
+\begin{breakablealgorithm}
+    \caption{Frievold's algorithm}
+    \begin{algorithmic}
+        \Input
+        \Desc{$A, B, C$}\hspace{60pt}{where each is an $n \times n$ matrix}
+        \EndInput
+        \Output
+        \Desc{$\{\text{True, False}\}$}\hspace{60pt}{whether $AB = C$}
+        \EndOutput
+    \end{algorithmic}
+    \vspace{3pt}
+    \begin{algorithmic}[1]
+        \State $r = $ random binary vector of length $n$
+        \If{$A(Br) = Cr$}
+            \State \Return \textbf{True}
+        \Else
+            \State \Return \textbf{False}
+        \EndIf
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Runtime Analysis}
+
+The runtime of Frievold's is:
+\begin{itemize}
+    \item $O(n)$ to choose a random vector
+    \item $O(n^2)$ to compute $Br$, $O(n^2)$ to compute $A(Br)$ and $O(n^2)$ to compute $Cr$
+    \item $O(n)$ to compare $A(Br)$ to $Cr$
+\end{itemize}
+
+Overall: $O(n^2)$.
+
+\subsection{Correctness}
+
+\begin{claim}
+    If $AB = C$, Frievold's always returns \textbf{True}.
+\end{claim}
+
+\begin{proof}
+    Assume $AB = C$, and $r$ is some vector of length $n$.
+    \begin{align*}
+        Cr &= (AB)r && \text{by matrix associativity}\\
+           &= A(Br)
+    \end{align*}
+\end{proof}
+
+\begin{claim}
+    If $AB \neq C$, $P(\textbf{True}) = \displaystyle\frac{1}{2}$.
+\end{claim}
+
+\begin{proof}
+    Let $D = AB - C$. Suppose Frievold's generates a random vector $r$ for which it returns 
+    \textbf{True}. Then:
+    \begin{align*} 
+        Dr &= (AB - C)r\\
+           &= (AB)r - Cr\\
+           &= A(Br) - Cr\\
+           &= 0
+    \end{align*}
+    $D = AB - C \neq 0$, so we can take $i, j \in \{1, \ldots, n\}$ such that
+    $D_{ij} = 1$. Let $v$ be the vector:
+    \[
+        v[k] = 
+        \begin{cases}
+            0 & \text{if } k \neq j\\
+            1 & \text{if } k = j
+        \end{cases}
+    \]
+    Notice that $Dv \neq 0$, because its $j^{th}$ entry will be 1.
+
+    Let $r' = r + v$. Then:
+    \begin{align*}
+        Dr' &= D(r + v)\\
+            &= 0 + Dv\\
+            &\neq 0
+    \end{align*}
+    If $Dr' \neq 0$, $(AB - C)r' = ABr' - Cr' \neq 0$, so Frievold's would return \textbf{False}.
+    This defines a one-to-one mapping between vectors $r$ that make Frievold's return \textbf{True},
+    and $r'$ that make Frievold's return \textbf{False}.
+
+    Therefore, Frievold's returns \textbf{True} for half of all possible binary vectors of length 
+    $n$, and \textbf{False} for the rest. $P(\textbf{True}) = \frac{1}{2}$.
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
