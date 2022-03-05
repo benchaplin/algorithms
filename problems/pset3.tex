@@ -1,0 +1,121 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+\usepackage[shortlabels]{enumitem}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{claim}{Claim}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Problem 3-1}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Problem Statement}
+
+For each of the following variants on the van Emde Boas data structures, carefully describe what
+changes are needed to the pseudocode and analyze the costs of the vEB operations \textsc{insert},
+\textsc{delete} and \textsc{successor}, comparing them with the costs of the same operations for the 
+original vEB structure.
+
+\begin{enumerate}[a)]
+    \item Instead of dividing the structure into $u^{1/2}$ groups of $u^{1/2}$ elements each, use 
+    $u^{1/3}$ groups of $u^{2/3}$ numbers each.
+\end{enumerate}
+
+\section{VEB Variants}
+\subsection{Groups of $u^{2/3}$}
+
+The algorithms for \textsc{insert}, \textsc{delete} and \textsc{successor} do not change. However, 
+the recurrence changes. Our original recurrence: 
+\begin{align*}
+    T(n) &= T(\sqrt{n}) + C\\
+         &= O(\log_2\log_2 n) 
+\end{align*}
+The new recurrence:
+\begin{align*}
+    T(n) &= T(n^{2/3}) + C'\\
+         &= O(\log_{3/2}\log_2 n)\\
+         &= O\left(\frac{\log_2 n}{\log_2 3/2}\log_2 n\right)\\
+         &= O(\log_2\log_2 n) 
+\end{align*}
+
+The runtime is asymptotically equivalent. However, we should expect $C' > C$, as groups are larger 
+and therefore operating on them will require more time.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
