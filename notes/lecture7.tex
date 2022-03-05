@@ -1,0 +1,254 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{claim}{Claim}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Lecture 7}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Skip Lists}
+\subsection{Intuition}
+
+We can understand skip lists as offering the same benefits of an express train. Consider a subway
+with stops:
+\begin{alignat*}{3}
+    14 \leftrightarrow 23 \leftrightarrow 34 \leftrightarrow 42 \leftrightarrow 59 \leftrightarrow 66 \leftrightarrow 72 \leftrightarrow 79
+\end{alignat*}
+
+We can imagine two trains, one stopping at each station, and the other skipping stops:
+\begin{alignat*}{4}
+    &14 \leftrightarrow &&34 \leftrightarrow &&59 \leftrightarrow &&72\\
+    &14 \leftrightarrow 23 \leftrightarrow &&34 \leftrightarrow 42 \leftrightarrow &&59 \leftrightarrow 66 \leftrightarrow &&72 \leftrightarrow 79
+\end{alignat*}
+
+Then, if we start at station 14 and want to get to station 66, we can save some stops by taking the 
+``express'' $14 \rightarrow 34 \rightarrow 59$, switch down to the ``local'', then finish $59 \rightarrow 66$.
+
+An even better system might have an ``double-express'' train:
+\begin{alignat*}{4}
+    &14 \leftrightarrow && &&59\\
+    &14 \leftrightarrow &&34 \leftrightarrow &&59 \leftrightarrow &&72\\
+    &14 \leftrightarrow 23 \leftrightarrow &&34 \leftrightarrow 42 \leftrightarrow &&59 \leftrightarrow 66 \leftrightarrow &&72 \leftrightarrow 79
+\end{alignat*}
+
+...and so on.
+ 
+\subsection{Data structure}
+
+Skip lists maintain a dynamic set of $n$ elements with $O(\log n)$ time per operation expectation, 
+\textbf{with high probability}.
+
+\begin{defn}
+    A parametrized event $E_\alpha$ occurs \textbf{with high probability} if, for any $\alpha \geq 1$, 
+    there is an appropriate choice of constants for which $E_\alpha$ occurs with probability at least
+    $1 - \displaystyle\frac{c_\alpha}{n^\alpha}$.
+\end{defn}
+
+It keeps all elements in a linked list at ``layer 0'' or $L_0$. It maintains layers of linked lists 
+above, each of which may or may not contain one of the elements below. If an element is in $L_i$, 
+then it is also in $L_{i - 1}, L_{i - 2}, \ldots, L_0$. Each node in one of the linked lists stores:
+\begin{itemize}
+    \item a value
+    \item a pointer to the next element of the list in the same layer, if not at the end
+    \item a pointer to the previous element of the list in the same layer, if not at the beginning
+    \item a pointer to the same element of the list in the above layer, if it exists
+    \item a pointer to the same element of the list in the below layer, if not at $L_0$
+\end{itemize}
+
+\subsection{Algorithms}
+
+\begin{breakablealgorithm}
+    \caption{\textsc{search}}
+    \begin{algorithmic}
+        \Input
+        \Desc{$S, x$}\hspace{10pt}{the skip list, and value for which to search}
+        \EndInput
+    \end{algorithmic}
+    \begin{algorithmic}[1]
+        \State $e = S.head$
+        \While{\textbf{true}}
+            \While{$e.next \neq null$ and $e.next.value < x$}
+                \State $e = e.next$
+            \EndWhile
+            \If{$e.value = x$}
+                \State \Return \textbf{true}
+            \EndIf
+            \If{$e.down \neq null$}
+                \State $e = e.down$
+            \Else
+                \State \Return \textbf{false}
+            \EndIf
+        \EndWhile
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+    \caption{\textsc{insert}}
+    \begin{algorithmic}
+        \Input
+        \Desc{$S, x$}\hspace{10pt}{the skip list, and value to insert}
+        \EndInput
+    \end{algorithmic}
+    \begin{algorithmic}[1]
+        \State $e = \textsc{search-traverse}(S, x)$ 
+        \Comment{same as \textsc{search}, but stop before returning \textbf{false} and just return $e$}
+        \State $f = \text{new Node}(x, prev: e.prev, next: e.next)$
+        \State $e.next.prev = f$
+        \State $e.next = f$
+        \State $r = \textsc{flip-coin}()$
+        \While{$r = $ heads}
+            \State $e.up = \text{new Node}(x, prev, next)$
+            \State $e = e.up$
+            \State $r = \textsc{flip-coin}()$
+        \EndWhile
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+    \caption{\textsc{delete}}
+    \begin{algorithmic}
+        \Input
+        \Desc{$S, x$}\hspace{10pt}{the skip list, and value to delete}
+        \EndInput
+    \end{algorithmic}
+    \begin{algorithmic}[1]
+        \State $e = \textsc{search-traverse}(S, x)$ 
+        \Comment{same as \textsc{search}, but stop before returning \textbf{false} and just return $e$}
+        \State $e.prev\:?\:e.prev.next = e.next$
+        \State $e.next\:?\:e.next.prev = e.prev$
+        \While{$e.up \neq null$}
+            \State $e = e.up$
+            \State $e.prev\:?\:e.prev.next = e.next$
+            \State $e.next\:?\:e.next.prev = e.prev$
+        \EndWhile
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Analysis}
+
+\begin{lem}
+    The number of layers after inserting $n$ elements into a skip list is $O(\log n)$, with high
+    probability. 
+\end{lem}
+
+\begin{proof}
+    \begin{align*}
+         Pr(\text{number of layers }\neq c \cdot \log n) &= Pr(\text{number of layers }> c \cdot \log n
+         \: \forall c \in \R^+)\\
+                                                         &= Pr(\text{some insert flipped heads }
+                                                         > c \cdot \log n \text{ times})\\
+                                                         &\leq n \cdot Pr(\text{a particular insert 
+                                                             flipped heads }
+                                                         > c \cdot \log n \text{ times})\\
+                                                         &= n \left(\frac{1}{2}\right)^{c \log n}\\
+                                                         &= n \cdot \frac{1}{n^c}\\
+                                                         &= \frac{1}{n^{c-1}}
+    \end{align*}
+    Therefore, the probability that the number of layers in the skip list after $n$ inserts is
+    $O(\log n)$ is $1 - \displaystyle\frac{1}{n^{c-1}}$.
+\end{proof}
+
+\begin{thm}
+    Searching for an element (\textbf{Algorithm 1}) in an $n$-element skip list costs $O(\log n)$ 
+    time, with high probability.
+\end{thm}
+
+\begin{proof}
+    Consider a search traversal backwards (from $L_0$ up/left). For each node: 
+    \begin{itemize}
+        \item If there is a node ``up'', we flipped heads
+        \item If there is no node ``up'', we flipped tails 
+    \end{itemize}
+    \begin{align*}
+        \text{The number of ``up'' moves } &< \text{ the number of levels}\\
+                                           &\leq c \log n \quad\text{w.h.p.} && \text{by \textbf{Lemma 1}}
+    \end{align*}
+    Therefore, w.h.p., the number of moves is at most the number of coin flips until we get $c \log n$
+    heads. Let $a$ be arbitrarily large. Say we flip the coin $a\cdot c \log n$ times.
+    \begin{align*}
+        Pr(\text{exactly $c \log n$ heads}) &= \binom{a \cdot c\log n}{c \log n} 
+        \left(\frac{1}{2}\right)^{c\log n} \left(\frac{1}{2}\right)^{(a-1)c\log n}\\
+        Pr(\text{at most $c \log n$ heads}) &\leq \binom{a \cdot c\log n}{c \log n} 
+        \left(\frac{1}{2}\right)^{(a-1)c\log n}\\
+                                            &\leq \frac{(e \cdot a)^{c\log n}}{2^{(a-1)c\log n}}
+            && \text{Recall: } \displaystyle\binom{y}{x} \leq \left(e\displaystyle\frac{y}{x}\right)^x\\
+            &= \frac{2^{\log (e \cdot a)c \log n}}{2^{(a-1)c\log n}}\\
+            &= 2^{\log (e \cdot a) - (a - 1)}\\
+            &= \frac{1}{2^{a-1-log(e \cdot a)}}
+    \end{align*}
+    Then the probability that we get more than $c \log n$ heads is $1 - \displaystyle\frac{1}{n^\alpha}$
+    for $\alpha = a - 1 - \log(e \cdot a)$. Therefore, the number of coin flips we need to make until 
+    we get $c \log n$ heads is $O(\log n)$, w.h.p.
+
+    Remember that the number of moves in a search is at most the number of coin flips until we get 
+    $c\log n$ heads. So search costs $O(\log n)$ time, with high probability.
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
