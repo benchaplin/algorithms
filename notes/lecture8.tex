@@ -1,0 +1,166 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumerate}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\fname@algorithm~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{claim}{Claim}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\theoremstyle{definition}
+\newtheorem*{defn}{Definition}
+\newtheorem*{ex}{Example}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+
+\title{Design and Analysis of Algorithms: Lecture 8}
+\author{Ben Chaplin}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Problem}
+\subsection{Dictionary problem}
+
+The dictionary problem asks for a data structure with the following requirements:
+\begin{itemize}
+    \item Maintain a dynamic set of items (where each item has a distinct key)
+    \item Support:
+        \begin{itemize}
+            \item \textsc{insert}(item)
+            \item \textsc{delete}(item)
+            \item \textsc{search}(key)
+        \end{itemize}
+\end{itemize}
+
+\subsection{Hashing}
+
+``Hashing'' the items' keys in a hash table gives $O(1)$ time per operation. We will use the
+following variables with regards to a hash table:
+\begin{itemize}
+    \item $u:$ number of possible keys 
+    \item $n:$ number of items currently in the table
+    \item $m:$ size of the table
+    \item $h: \{0, 1, \ldots, u-1\} \rightarrow \{0, 1, \ldots, m-1\}$ the hash function
+\end{itemize}
+
+With chaining, hashing takes $\Theta(1 + \frac{n}{m})$ time. The proof of this fact assumes 
+\textbf{simple uniform hashing}.
+
+\begin{defn}
+    A function provides \textbf{simple uniform hashing} when, for two random distinct keys 
+    $k_1, k_2$, the probability the function outputs the same hash is $\displaystyle\frac{1}{m}$.
+\end{defn}
+
+But what kind of hash functions guarantee this, no matter the universe of keys?
+
+\section{Universal Hashing}
+
+\begin{defn}
+    Let $\mathcal{H}$ be a set of hash functions. $\mathcal{H}$ is \textbf{universal} if for any two
+    distinct keys $k_1, k_2$, the probability a random hash function $h \in \mathcal{H}$ outputs 
+    the same hash is at most $\displaystyle\frac{1}{m}$.
+\end{defn}
+
+Note that contrary to the definition of simple uniform hashing, this definition includes a probability 
+over \textit{all hash functions}. Simple uniform hashing was defined by a probability over 
+\textit{all pairs of distinct keys}.
+
+\begin{thm}
+    Let $\mathcal{H}$ be universal. For $n$ arbitrary distinct keys and a random $h \in \mathcal{H}$,
+    the expected number of colliding keys is at most $1 + \displaystyle\frac{n}{n}$.
+\end{thm}
+
+\begin{proof}
+    Take keys $k_1, \ldots, k_n$. Define an ``indicator'' random variable:
+    $$I_{i,j} = 
+    \begin{cases}
+        1 & \text{if $h(k_i) = h(k_j)$}\\
+        0 & \text{else}
+    \end{cases}$$
+
+    \begin{align*}
+        E[\text{number of keys with the same hash as $k_i$}] &= E\left[\sum_{i \neq j} I_{i,j}\right] 
+            + I_{i,i}\\
+        &= E\left[\sum_{i \neq j} I_{i,j}\right]+ 1\\
+        &= \left(\sum_{i \neq j} E[I_{i,j}]\right) + 1\\
+        &= \left(\sum_{i \neq j} Pr(I_{i,j} = 1)\right) + 1\\
+        &\leq \left(\sum_{i \neq j} \frac{1}{m}\right) + 1 && \text{by universality}\\
+        &= \frac{n-1}{m} + 1
+    \end{align*}
+\end{proof}
+
+\section{Dot product hash family}
+
+\begin{defn}
+    Assume $m$ is prime and $u = m^r$ for some $r \in \Z^+$. For each key $k$, define a vector 
+    $\bar{k} = \langle k_0, k_1, \ldots, k_{r-1}\rangle$ to be the digits of $k$ in base $m$. 
+    The \textbf{dot product hash family} is defined:
+    $$\mathcal{H} = \left\{ h_a(k) = (\bar{a} \cdot \bar{k})\mod m \mid a \in \{0, \ldots, u-1\}\right\}$$
+\end{defn}
+
+Note here that the hash functions in $\mathcal{H}$ are completely determined by the choice of $a$. 
+
+\begin{thm}
+    The dot product hash family is universal.
+\end{thm}
+
+\begin{proof}
+    Let $k \neq k'$ be keys. Then, some digit of $\bar{k}$ and $\bar{k'}$ differs, say $k_d \neq k'_d$.
+\end{proof}
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
