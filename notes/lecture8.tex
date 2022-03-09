@@ -144,6 +144,22 @@ Note here that the hash functions in $\mathcal{H}$ are completely determined by 
 
 \begin{proof}
     Let $k \neq k'$ be keys. Then, some digit of $\bar{k}$ and $\bar{k'}$ differs, say $k_d \neq k'_d$.
+    For a random key $a$:
+    \begin{align*}
+        Pr(h_a(k) = h_a(k')) 
+        &= Pr\left(\sum_{i = 0}^{r-1}a_ik_i = \sum_{i=0}^{r-1} a_i k'_i \mod m\right)\\
+        &= Pr\left(\sum_{i = 0}^{r-1}a_i(k_i - k_i') = 0 \mod m\right)\\
+        &= Pr\left(a_d(k_d - k'_d) + \sum_{i = 0, i \neq d}^{r-1}a_i(k_i - k_i') = 0 \mod m\right)\\
+        &= Pr\left(a_d = -(k_d - k_d')^{-1} \cdot \sum_{i = 0, i \neq d}^{r-1}a_i(k_i - k_i') \mod m\right)
+        && \text{$m$ is prime}\\
+    \end{align*}
+    Or, in other words, $Pr(h_a(k) = h_a(k'))$ is the same as the probability that $a_d$ is equal to 
+    some integer $n \mod m$. Note that $n$ does not rely on $a_d$ at all, so the relevant probability
+    is the same as the probability that $a_d$ is equal to random number modulo $m$.
+    \begin{align*}
+        &= E_{a_i \neq d}\big[Pr_{a_d}(a_d = n \mod m)\big]\\
+        &= \frac{1}{m}
+    \end{align*}
 \end{proof}
 
 
